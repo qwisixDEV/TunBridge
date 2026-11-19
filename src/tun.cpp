@@ -140,7 +140,8 @@ DWORD WINAPI StartTunThread(LPVOID) {
     si.wShowWindow = SW_HIDE; si.hStdOutput = hw; si.hStdError = hw;
     PROCESS_INFORMATION pi = {};
     if (!CreateProcessW(nullptr, cmd, nullptr, nullptr, hw ? TRUE : FALSE, CREATE_NO_WINDOW | CREATE_SUSPENDED, nullptr, g_exeDir, &si, &pi)) {
-        if (hw) CloseHandle(hw); if (hr) CloseHandle(hr);
+        if (hw) CloseHandle(hw);
+        if (hr) CloseHandle(hr);
         if (g_tunJob) { CloseHandle(g_tunJob); g_tunJob = nullptr; }
         Fail(2); return 0;
     }

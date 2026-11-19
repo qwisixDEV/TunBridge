@@ -455,7 +455,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             for (HICON i : ics) if (i) DestroyIcon(i);
             HFONT fts[] = { g_fontTitle, g_fontSemi, g_fontBody, g_fontSeg, g_fontSegSemi, g_fontSmall, g_fontMono, g_fontIcon };
             for (HFONT f : fts) if (f) DeleteObject(f);
-            if (g_brInput) DeleteObject(g_brInput); if (g_brInputRo) DeleteObject(g_brInputRo);
+            if (g_brInput) DeleteObject(g_brInput);
+            if (g_brInputRo) DeleteObject(g_brInputRo);
             g_hwnd = nullptr; PostQuitMessage(0); break;
         }
         default: return DefWindowProcW(hwnd, msg, wp, lp);

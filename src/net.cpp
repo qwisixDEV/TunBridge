@@ -130,7 +130,8 @@ SOCKET connect_via_upstream(const NetConfig* c, const char* host, unsigned short
         if (s != INVALID_SOCKET) { if (outProto) *outProto = 1; if (outErr) *outErr = 0; return s; }
         if (err == 2) { s = connect_via_http_proxy(c, host, port, &err); if (s != INVALID_SOCKET && outProto) *outProto = 2; }
     }
-    if (outErr) *outErr = err; return s;
+    if (outErr) *outErr = err;
+    return s;
 }
 int TestUpstreamAuthAndProto(const NetConfig* c, int* outProto) {
     *outProto = 1;
@@ -159,7 +160,8 @@ static void relay_sockets(SOCKET a, SOCKET b) {
     while (g_running && g_mode == 0 && !g_shuttingDown) {
         fd_set fds; FD_ZERO(&fds); FD_SET(a, &fds); FD_SET(b, &fds);
         struct timeval tv = { 1, 0 }; int r = select(0, &fds, nullptr, nullptr, &tv);
-        if (r < 0) break; if (r == 0) continue;
+        if (r < 0) break;
+        if (r == 0) continue;
         if (FD_ISSET(a, &fds)) { int n = recv(a, buf, sizeof(buf), 0); if (n <= 0 || !send_all(b, buf, n)) break; InterlockedExchangeAdd64(&g_bytesTotal, n); }
         if (FD_ISSET(b, &fds)) { int n = recv(b, buf, sizeof(buf), 0); if (n <= 0 || !send_all(a, buf, n)) break; InterlockedExchangeAdd64(&g_bytesTotal, n); }
     }
