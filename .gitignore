@@ -1,0 +1,47 @@
+# Build output
+build/
+build-*/
+out/
+bin/
+obj/
+
+# Compiled binaries and intermediate files
+*.exe
+*.dll
+*.obj
+*.o
+*.pdb
+*.ilk
+*.lib
+*.exp
+*.res
+
+# Visual Studio / IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.ncb
+*.sdf
+*.VC.db
+*.VC.opendb
+*.aps
+*.ipch
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+*.ninja
+*.cmake.stamp
+
+# Local inspection artifacts
+inspect_structure.py
+inspect_structure.txt
+
+# OS artifacts
+Thumbs.db
+desktop.ini
