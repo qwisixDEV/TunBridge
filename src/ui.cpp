@@ -149,7 +149,7 @@ static void PaintWindow(HWND hwnd, HDC hdcOut) {
         DrawTxt(hdc, g_fontBody, COL_TEXT, L"Автовозврат Zapret", S(24), S(344), S(240), S(32), DT_LEFT|DT_VCENTER|DT_SINGLELINE);
 
         wchar_t t1[MAX_PATH], t2[MAX_PATH]; bool ht = FindTunBinaries(t1, t2);
-        DrawTxt(hdc, g_fontBody,  COL_TEXT, ht ? L"Драйвер TUN" : L"Драйвер TUN", S(24), S(384), S(160), S(32), DT_LEFT|DT_VCENTER|DT_SINGLELINE);
+        DrawTxt(hdc, g_fontBody,  COL_TEXT, L"Драйвер TUN", S(24), S(384), S(160), S(32), DT_LEFT|DT_VCENTER|DT_SINGLELINE);
         DrawTxt(hdc, g_fontSmall, ht ? COL_MUTED : COL_DANGER, ht ? L"Установлен" : L"Не найден", S(188), S(384), S(108), S(32), DT_RIGHT|DT_VCENTER|DT_SINGLELINE);
         DrawTxt(hdc, g_fontBody,  COL_TEXT, L"Обход DPI (Zapret)", S(24), S(422), S(160), S(32), DT_LEFT|DT_VCENTER|DT_SINGLELINE);
         DrawTxt(hdc, g_fontSmall, g_zapretActive ? COL_DANGER : COL_MUTED, g_zapretActive ? L"Активен" : L"Остановлен", S(188), S(422), S(108), S(32), DT_RIGHT|DT_VCENTER|DT_SINGLELINE);
@@ -447,7 +447,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             break;
         }
         case WM_CLOSE:
-            InterlockedExchange(&g_shuttingDown, 1); SaveConfig(); StopAll(); DestroyWindow(hwnd); break;
+            InterlockedExchange(&g_shuttingDown, 1); SaveConfig(); DestroyWindow(hwnd); break;
         case WM_DESTROY: {
             KillTimer(hwnd, TIMER_STATS); StopAll();
             if (g_trayAdded) { Shell_NotifyIconW(NIM_DELETE, &g_nid); g_trayAdded = false; }

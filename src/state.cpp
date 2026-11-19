@@ -39,4 +39,4 @@ wchar_t g_stoppedZapretCmdLine[8192] = {};
 
 CRITICAL_SECTION g_logCs, g_cfgCs;
 
-NetConfig g_cfg = { "192.168.1.66", 10808, "incy_99d625cb", "7038a5a40b5dd855102e72f804531bcc", 8888 };
+NetConfig g_cfg = { "", 10808, "", "", 8888 };

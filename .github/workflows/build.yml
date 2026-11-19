@@ -1,0 +1,53 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Prepare Binaries and Checksum
+        shell: pwsh
+        run: |
+          $exePath = "build/Release/TunBridge.exe"
+          if (-not (Test-Path $exePath)) {
+            $exePath = "build/TunBridge.exe"
+          }
+          New-Item -ItemType Directory -Path "dist" -Force
+          Copy-Item $exePath -Destination "dist/TunBridge.exe" -Force
+          $hash = (Get-FileHash -Path "dist/TunBridge.exe" -Algorithm SHA256).Hash.ToLower()
+          "$hash  TunBridge.exe" | Set-Content -Path "dist/TunBridge.exe.sha256" -Encoding ASCII
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunBridge-windows-x64
+          path: dist/
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} dist/TunBridge.exe dist/TunBridge.exe.sha256 --generate-notes

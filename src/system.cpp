@@ -62,10 +62,51 @@ static bool RunHiddenCaptureUtf8(const wchar_t* cmd, char* out, int outSz, DWORD
         CloseHandle(hw); CloseHandle(hr); return false;
     }
     CloseHandle(hw);
-    int tot = 0; DWORD br = 0;
-    while (tot < outSz - 1 && ReadFile(hr, out + tot, (DWORD)(outSz - 1 - tot), &br, nullptr) && br > 0) tot += (int)br;
-    out[tot] = 0; CloseHandle(hr);
-    WaitForSingleObject(pi.hProcess, ms); CloseHandle(pi.hThread); CloseHandle(pi.hProcess);
+
+    int tot = 0;
+    ULONGLONG t0 = GetTickCount64();
+    while (true) {
+        DWORD avail = 0;
+        if (PeekNamedPipe(hr, nullptr, 0, nullptr, &avail, nullptr)) {
+            if (avail > 0 && tot < outSz - 1) {
+                DWORD toRead = (DWORD)(outSz - 1 - tot);
+                if (toRead > avail) toRead = avail;
+                DWORD br = 0;
+                if (ReadFile(hr, out + tot, toRead, &br, nullptr) && br > 0) tot += (int)br;
+            }
+        } else {
+            break;
+        }
+        if (WaitForSingleObject(pi.hProcess, 0) == WAIT_OBJECT_0) {
+            while (tot < outSz - 1 && PeekNamedPipe(hr, nullptr, 0, nullptr, &avail, nullptr) && avail > 0) {
+                DWORD toRead = (DWORD)(outSz - 1 - tot);
+                if (toRead > avail) toRead = avail;
+                DWORD br = 0;
+                if (ReadFile(hr, out + tot, toRead, &br, nullptr) && br > 0) tot += (int)br;
+                else break;
+            }
+            break;
+        }
+        if (GetTickCount64() - t0 >= ms) break;
+        Sleep(10);
+    }
+    out[tot] = 0;
+    CloseHandle(hr);
+
+    ULONGLONG elapsed = GetTickCount64() - t0;
+    if (elapsed < ms && WaitForSingleObject(pi.hProcess, 0) != WAIT_OBJECT_0) {
+        WaitForSingleObject(pi.hProcess, (DWORD)(ms - elapsed));
+    }
+
+    if (WaitForSingleObject(pi.hProcess, 0) != WAIT_OBJECT_0) {
+        TerminateProcess(pi.hProcess, 1);
+        WaitForSingleObject(pi.hProcess, 200);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return false;
+    }
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
     return tot > 0;
 }
 static bool IsProcessRunning(const wchar_t* exe, wchar_t* outPath = nullptr, int maxPath = 0) {
