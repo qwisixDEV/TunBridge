@@ -59,6 +59,7 @@ TunBridge/
   - MinGW-w64 GCC (например, из MSYS2, пакет `mingw-w64-x86_64-gcc`);
   - Clang для Windows / MSYS2 Clang.
 - Все зависимости — системные библиотеки Windows (`ws2_32`, `iphlpapi`, `wininet`, `comctl32`, `gdiplus`, `shell32`, `advapi32`, `crypt32`, `user32`, `gdi32`, `ole32`). Внешние библиотеки не требуются.
+- Исполняемый файл собирается со статической линковкой рантайма (`-static`, `-static-libgcc`, `-static-libstdc++`) и со strip (`-s`), поэтому для запуска не нужны DLL MSYS2/MinGW или Visual C++ Redistributable.
 
 ## Сборка
 

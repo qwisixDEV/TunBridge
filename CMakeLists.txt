@@ -28,8 +28,15 @@ target_compile_definitions(TunBridge PRIVATE
 
 if(MSVC)
     target_compile_options(TunBridge PRIVATE /utf-8)
+    set_property(TARGET TunBridge PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
     target_compile_options(TunBridge PRIVATE -Wall)
+    target_link_options(TunBridge PRIVATE
+        -static
+        -static-libgcc
+        -static-libstdc++
+        -s
+    )
 endif()
 
 target_link_libraries(TunBridge PRIVATE
