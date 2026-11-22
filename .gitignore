@@ -4,6 +4,14 @@ build-*/
 out/
 bin/
 obj/
+pkg/
+# makepkg work directories (project source lives in tracked src/)
+/packaging/arch/src/
+/packaging/arch/pkg/
+packaging/arch/*.pkg.tar.*
+*.pkg.tar.*
+*.pkg.tar.zst
+*.tar.gz
 
 # Compiled binaries and intermediate files
 *.exe
@@ -41,6 +49,14 @@ Makefile
 # Local inspection artifacts
 inspect_structure.py
 inspect_structure.txt
+
+# Local configuration and downloaded binaries
+config.ini
+*.ini.local
+tun2socks
+tun2socks-*
+tun2socks.exe
+wintun.dll
 
 # OS artifacts
 Thumbs.db

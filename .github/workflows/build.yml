@@ -51,3 +51,139 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create ${{ github.ref_name }} dist/TunBridge.exe dist/TunBridge.exe.sha256 --generate-notes
+
+  linux:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-base-dev libcurl4-openssl-dev libssl-dev zlib1g-dev ninja-build cmake g++
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Report binary sizes
+        run: stat -c '%n %s bytes' build/tunbridge build/tunbridge-helper
+
+      - name: Prepare Linux binaries
+        run: |
+          mkdir -p dist-linux
+          cp build/tunbridge build/tunbridge-helper dist-linux/
+          cd dist-linux
+          sha256sum tunbridge > tunbridge.sha256
+          sha256sum tunbridge-helper > tunbridge-helper.sha256
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunBridge-linux-x64
+          path: dist-linux/
+
+  linux-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build python3 perl pkg-config bison flex gperf \
+            libssl-dev zlib1g-dev libfreetype6-dev libfontconfig1-dev \
+            libx11-dev libxcb1-dev libxcb-cursor-dev libxcb-icccm4-dev \
+            libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev \
+            libxcb-render-util0-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-shm0-dev libxcb-sync-dev libxcb-util-dev libxcb-xfixes0-dev \
+            libxcb-xinerama0-dev libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev \
+            libglib2.0-dev libdbus-1-dev libwayland-dev libinput-dev \
+            libpng-dev libjpeg-dev libicu-dev libgl1-mesa-dev libegl1-mesa-dev \
+            libxrender-dev libxrandr-dev libxi-dev libxcursor-dev libxcomposite-dev \
+            libxdamage-dev libxext-dev libsm-dev libice-dev libexpat1-dev libpcre2-dev
+
+      - name: Build static Qt 6 (qtbase only)
+        run: |
+          set -euxo pipefail
+          mkdir -p "$RUNNER_TEMP/qt-src"
+          curl -fL --retry 3 -o "$RUNNER_TEMP/qt.tar.xz" \
+            https://download.qt.io/archive/qt/6.8/6.8.3/submodules/qtbase-everywhere-src-6.8.3.tar.xz
+          tar -xf "$RUNNER_TEMP/qt.tar.xz" -C "$RUNNER_TEMP/qt-src" --strip-components=1
+          cmake -S "$RUNNER_TEMP/qt-src" -B "$RUNNER_TEMP/qt-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/qt-static" \
+            -DCMAKE_INSTALL_MESSAGE=NEVER \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DFEATURE_static=ON \
+            -DFEATURE_dbus=ON \
+            -DFEATURE_openssl=ON \
+            -DFEATURE_system_zlib=ON \
+            -DFEATURE_system_freetype=ON \
+            -DFEATURE_system_fontconfig=ON \
+            -DFEATURE_xcb=ON \
+            -DFEATURE_xlib=ON \
+            -DFEATURE_wayland=ON \
+            -DFEATURE_opengl=OFF \
+            -DFEATURE_openglwidgets=OFF \
+            -DINPUT_opengl=no
+          cmake --build "$RUNNER_TEMP/qt-build" --parallel 2
+          cmake --install "$RUNNER_TEMP/qt-build"
+
+      - name: Build static libcurl
+        run: |
+          set -euxo pipefail
+          curl -fL --retry 3 -o "$RUNNER_TEMP/curl.tar.gz" \
+            https://curl.se/download/curl-8.11.1.tar.gz
+          tar -xf "$RUNNER_TEMP/curl.tar.gz" -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/curl-8.11.1"
+          ./configure --prefix="$RUNNER_TEMP/curl-static" \
+            --disable-shared --enable-static --disable-ldap --disable-ldaps \
+            --disable-manual --without-libpsl --without-nghttp2 --without-brotli \
+            --without-idn2 --without-zstd --with-openssl --with-zlib
+          make -j2
+          make install
+
+      - name: Configure and build static binaries
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build-static -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTB_STATIC=ON \
+            -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/qt-static;$RUNNER_TEMP/curl-static"
+          cmake --build build-static
+          ctest --test-dir build-static --output-on-failure
+          file build-static/tunbridge build-static/tunbridge-helper
+          ldd build-static/tunbridge || true
+          ldd build-static/tunbridge-helper || true
+
+      - name: Prepare static binaries
+        run: |
+          mkdir -p dist-static
+          cp build-static/tunbridge dist-static/tunbridge-linux-x86_64-static
+          cp build-static/tunbridge-helper dist-static/tunbridge-helper-linux-x86_64-static
+          cd dist-static
+          sha256sum tunbridge-linux-x86_64-static > tunbridge-linux-x86_64-static.sha256
+          sha256sum tunbridge-helper-linux-x86_64-static > tunbridge-helper-linux-x86_64-static.sha256
+
+      - name: Upload Static Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunBridge-linux-x64-static
+          path: dist-static/
+
