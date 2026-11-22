@@ -1,6 +1,6 @@
 # Maintainer: TunBridge <qwisixDEV@users.noreply.github.com>
 pkgname=tunbridge
-pkgver=1.0.2
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="Нативный VPN/прокси-клиент на Qt 6: системный прокси и TUN-режим с управлением Zapret"
 arch=('x86_64' 'aarch64')

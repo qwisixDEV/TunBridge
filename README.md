@@ -155,14 +155,12 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-Через PKGBUILD (Arch / CachyOS) — после публикации релиза `v1.0.2`:
+Через PKGBUILD (Arch / CachyOS):
 
 ```bash
 cd packaging/arch
 makepkg -si
 ```
-
-Для сборки из текущей ветки до релиза используйте команды выше из корня репозитория; `PKGBUILD` ориентирован на следующий тег, чтобы не подхватить старый `v1.0.1`.
 
 ### Что установится
 
