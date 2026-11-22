@@ -13,6 +13,8 @@ endif()
 find_package(Threads REQUIRED)
 enable_testing()
 
+option(TB_STATIC "Link Linux binaries fully statically" OFF)
+
 # Keep every MSVC target on the same CRT; the Win32 GUI is built statically.
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -81,6 +83,15 @@ elseif(UNIX AND NOT APPLE)
     # -----------------------------------------------------------------------
     # Linux (Arch / CachyOS): unprivileged Qt Widgets GUI + root helper.
     # -----------------------------------------------------------------------
+    if(TB_STATIC)
+        set(BUILD_SHARED_LIBS OFF)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+        set(CURL_USE_STATIC_LIBS ON)
+        set(OPENSSL_USE_STATIC_LIBS TRUE)
+        set(ZLIB_USE_STATIC_LIBS "ON")
+        add_link_options(-static -static-libgcc -static-libstdc++)
+    endif()
+
     find_package(Qt6 6.2 REQUIRED COMPONENTS Widgets Network)
     set(CMAKE_AUTOMOC ON)
     find_package(CURL REQUIRED)
