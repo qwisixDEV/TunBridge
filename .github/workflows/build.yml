@@ -123,14 +123,13 @@ jobs:
           set -euxo pipefail
           mkdir -p "$RUNNER_TEMP/qt-src"
           curl -fL --retry 3 -o "$RUNNER_TEMP/qt.tar.xz" \
-            https://download.qt.io/official_releases/qt/6.8/6.8.3/single/qt-everywhere-src-6.8.3.tar.xz
+            https://download.qt.io/archive/qt/6.8/6.8.3/submodules/qtbase-everywhere-src-6.8.3.tar.xz
           tar -xf "$RUNNER_TEMP/qt.tar.xz" -C "$RUNNER_TEMP/qt-src" --strip-components=1
           cmake -S "$RUNNER_TEMP/qt-src" -B "$RUNNER_TEMP/qt-build" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/qt-static" \
             -DCMAKE_INSTALL_MESSAGE=NEVER \
             -DBUILD_SHARED_LIBS=OFF \
-            -DQT_BUILD_SUBMODULES=qtbase \
             -DFEATURE_static=ON \
             -DFEATURE_dbus=ON \
             -DFEATURE_openssl=ON \
