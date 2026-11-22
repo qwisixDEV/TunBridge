@@ -78,3 +78,17 @@ jobs:
       - name: Report binary sizes
         run: stat -c '%n %s bytes' build/tunbridge build/tunbridge-helper
 
+      - name: Prepare Linux binaries
+        run: |
+          mkdir -p dist-linux
+          cp build/tunbridge build/tunbridge-helper dist-linux/
+          cd dist-linux
+          sha256sum tunbridge > tunbridge.sha256
+          sha256sum tunbridge-helper > tunbridge-helper.sha256
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunBridge-linux-x64
+          path: dist-linux/
+
