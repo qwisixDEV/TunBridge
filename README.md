@@ -1,6 +1,6 @@
 # TunBridge
 
-**TunBridge** — нативное приложение для Windows с графическим интерфейсом (Win32 / GDI+), которое направляет трафик через удалённый прокси-сервер. Поддерживаются два режима работы:
+**TunBridge** — лёгкое нативное приложение для Windows (Win32 / GDI+) и Linux (Qt 6 Widgets), которое направляет трафик через удалённый прокси-сервер. Поддерживаются два режима работы:
 
 - **Системный прокси** — локальный HTTP-прокси, который прописывается в настройки Windows и перенаправляет трафик в вышестоящий SOCKS5- или HTTP-прокси.
 - **Весь трафик (TUN)** — создание виртуального сетевого адаптера `TunBridge` через `tun2socks` + `wintun`, с изменением системных маршрутов и DNS.
@@ -133,6 +133,61 @@ HKEY_CURRENT_USER\Software\TunBridge
 - Приложение не содержит встроенных сторонних библиотек: `wintun.dll` и `tun2socks.exe` загружаются отдельно с официальных релизов и проверяются по контрольным суммам.
 - Изменение маршрутов и создание TUN-адаптера выполняются только с правами администратора.
 - Для работы TUN может потребоваться разрешить приложение в брандмауэре Windows.
+
+## Linux (Arch Linux / CachyOS)
+
+Linux-порт сохраняет всю функциональность Windows-версии, но разделяет права: GUI **никогда** не запускается от root. Привилегированные операции (TUN, маршруты, DNS, Zapret) выполняет отдельный `tunbridge-helper` через `pkexec` с Polkit-политикой `org.tunbridge.helper.policy`.
+
+### Зависимости
+
+```bash
+sudo pacman -S --needed base-devel cmake ninja gcc qt6-base curl openssl zlib \
+               iproute2 polkit systemd
+```
+
+### Сборка и установка
+
+```bash
+git clone https://github.com/qwisixDEV/TunBridge.git
+cd TunBridge
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+```
+
+Через PKGBUILD (Arch / CachyOS):
+
+```bash
+cd packaging/arch
+makepkg -si
+```
+
+### Что установится
+
+| Файл | Назначение |
+|---|---|
+| `/usr/bin/tunbridge` | GUI от обычного пользователя (Qt6 Widgets, без QML/WebEngine) |
+| `/usr/bin/tunbridge-helper` | привилегированный хелпер, запускается только через `pkexec` |
+| `/usr/share/applications/tunbridge.desktop` | запись в меню приложений |
+| `/usr/share/polkit-1/actions/org.tunbridge.helper.policy` | политика Polkit для TUN/маршрутов/DNS/Zapret |
+
+### Поведение в Linux
+
+- **Системный прокси:** KDE Plasma 6 — `kwriteconfig6` + `kioslaverc` и уведомление KIO через D-Bus; GNOME / Cinnamon / Budgie — `gsettings org.gnome.system.proxy`; Hyprland / Sway / i3 — `~/.config/tunbridge/proxy.env` и `systemctl --user set-environment`. Исходные значения сохраняются и восстанавливаются при отключении.
+- **Весь трафик (TUN):** `/dev/net/tun` + `tun2socks` без `wintun.dll`. Хелпер поднимает `tunbridge0` (10.251.251.1/24, MTU 1420), добавляет маршрут к вышестоящему прокси через исходный шлюз, `/1`-маршруты, блокирует утечки IPv6 и настраивает DNS через `resolvectl` (или бэкапит `/etc/resolv.conf`). Если GUI умер или отключился, хелпер по закрытому каналу мгновенно откатывает всё состояние.
+- **Zapret:** обнаруживаются активные юниты `zapret*` и процессы `nfqws`/`tpws`; включение TUN предлагает остановить их, опция «Автовозврат Zapret» возвращает исходное состояние.
+- **Ресурсы:** один `epoll`-поток для локального HTTP-моста, фиксированные буферы, `TCP_NODELAY`/`MSG_NOSIGNAL`, никаких фоновых опросов. Таймер статистики и пинг запускаются только при открытом окне; в трее CPU ≈ 0%.
+- **Конфиг:** `$XDG_CONFIG_HOME/tunbridge/config.ini` (права `0600`), автозапуск — `$XDG_CONFIG_HOME/autostart/tunbridge.desktop`.
+- **Загрузка tun2socks:** `$XDG_DATA_HOME/tunbridge/bin/tun2socks`, официальный релиз `xjasonlyu/tun2socks` под `linux-amd64`/`linux-arm64`, обязательная проверка SHA-256 из GitHub API.
+
+### Ручная проверка на живой системе
+
+1. `pkexec /usr/bin/tunbridge-helper --socket /tmp/test.sock` — должен запросить пароль и не запускать фоновые циклы.
+2. Системный прокси: подключить/отключить в KDE, GNOME и Hyprland; проверить, что настройки вернулись в исходное состояние.
+3. TUN: подключиться, проверить `ip addr show tunbridge0`, `ip route`, `resolvectl status`, отсутствие IPv6-утечек на `ipleak.net`.
+4. Убить GUI (`kill -9`) при активном TUN — хелпер должен снять интерфейс, маршруты и DNS.
+5. Zapret: запустить юнит `zapret`, включить TUN с автовозвратом, отключиться — юнит должен подняться снова.
+6. Измерить потребление: `pidstat -p $(pgrep -f '/usr/bin/tunbridge$') 1` в трее должно показывать ~0% CPU.
 
 ## Лицензия
 

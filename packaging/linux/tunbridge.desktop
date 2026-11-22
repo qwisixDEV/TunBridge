@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=TunBridge
+GenericName=VPN/Proxy client
+Comment=Клиент VPN и прокси: направляет трафик через удалённый прокси или TUN-адаптер
+Exec=tunbridge
+Icon=tunbridge
+Categories=Network;VPN;Qt;
+Terminal=false
+StartupNotify=false
+X-GNOME-Autostart-enabled=true
