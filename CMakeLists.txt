@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(TunBridge VERSION 1.0.1 LANGUAGES CXX)
 
 add_executable(TunBridge WIN32
+    src/core.cpp
     src/main.cpp
     src/state.cpp
     src/util.cpp

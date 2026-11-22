@@ -1,5 +1,8 @@
 #pragma once
 
+// Shared data model (NetConfig, ProbeResult, CLI parsing) is platform-neutral.
+#include "tunbridge/core.hpp"
+
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -114,10 +117,11 @@ extern wchar_t g_stoppedZapretCmdLine[8192];
 
 extern CRITICAL_SECTION g_logCs, g_cfgCs;
 
-struct NetConfig { char ip[128]; int socksPort; char user[256]; char pass[256]; int localPort; };
+// Preserve the original global names used by the Win32 UI code.
+using NetConfig = tb::NetConfig;
 extern NetConfig g_cfg;
 
-struct ProbeResult { LONG gen; int err; int pingMs; int proto; bool fromTestBtn; char cc[4]; };
+using ProbeResult = tb::ProbeResult;
 
 inline int S(int v) { return (int)(v * g_scale + 0.5f); }
 inline Gdiplus::Color GCol(COLORREF c, BYTE a = 255) { return Gdiplus::Color(a, GetRValue(c), GetGValue(c), GetBValue(c)); }
