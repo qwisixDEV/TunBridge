@@ -139,7 +139,9 @@ jobs:
             -DFEATURE_xcb=ON \
             -DFEATURE_xlib=ON \
             -DFEATURE_wayland=ON \
-            -DINPUT_opengl=desktop
+            -DFEATURE_opengl=OFF \
+            -DFEATURE_openglwidgets=OFF \
+            -DINPUT_opengl=no
           cmake --build "$RUNNER_TEMP/qt-build" --parallel 2
           cmake --install "$RUNNER_TEMP/qt-build"
 
