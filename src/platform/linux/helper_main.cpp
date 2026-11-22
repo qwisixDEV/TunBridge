@@ -27,7 +27,8 @@ void on_signal(int) {
     g_stopRequested = 1;
     if (g_signalWriteFd >= 0) {
         const char byte = 1;
-        (void)::write(g_signalWriteFd, &byte, 1);
+        const ssize_t written = ::write(g_signalWriteFd, &byte, 1);
+        (void)written;
     }
 }
 

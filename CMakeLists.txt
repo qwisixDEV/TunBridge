@@ -13,6 +13,11 @@ endif()
 find_package(Threads REQUIRED)
 enable_testing()
 
+# Keep every MSVC target on the same CRT; the Win32 GUI is built statically.
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 # Compact, LTO-optimised release binaries; no debug symbols in installed files.
 if(NOT MSVC)
     add_compile_options(-Wall -Wextra -ffunction-sections -fdata-sections)
@@ -121,7 +126,9 @@ elseif(UNIX AND NOT APPLE)
     target_link_libraries(tunbridge-helper PRIVATE tb_core)
     set_target_properties(tunbridge-helper PROPERTIES OUTPUT_NAME "tunbridge-helper")
 
-    add_executable(tb_net_tests tests/net_engine_tests.cpp)
+    add_executable(tb_net_tests tests/net_engine_tests.cpp
+        src/platform/linux/net_engine.cpp
+    )
     target_link_libraries(tb_net_tests PRIVATE tb_core)
     add_test(NAME net_engine COMMAND tb_net_tests)
 

@@ -303,7 +303,8 @@ pid_t spawn_detached(const std::vector<std::string>& args, int* execErr) {
         argv.push_back(nullptr);
         ::execvp(argv[0], argv.data());
         const int e = errno;
-        (void)::write(pfd[1], &e, sizeof(e));
+        const ssize_t written = ::write(pfd[1], &e, sizeof(e));
+        (void)written;
         ::_exit(127);
     }
     ::close(pfd[1]);
